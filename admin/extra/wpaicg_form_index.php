@@ -517,7 +517,7 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
         </div>
         <div class="wpaicg-modal-tab wpaicg-modal-tab-ai-engine" style="display: none">
             <div class="wpaicg-grid wpaicg-mb-10">
-                <div class="wpaicg-grid-1">
+                <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Engine', 'gpt3-ai-content-generator') ?></strong>
                     <?php if ($wpaicg_provider == 'OpenAI') : ?>
                         <!-- Display dropdown for OpenAI -->
@@ -912,7 +912,7 @@ endif;
                         <?php endif; ?>
 
                     </div>
-                    <div class="mb-5 wpaicg-template-max_tokens"><strong><?php echo esc_html__('Max Tokens', 'gpt3-ai-content-generator') ?>: </strong><input name="max_tokens" type="text" min="1" max="2048"></div>
+                    <div class="mb-5 wpaicg-template-max_tokens"><strong><?php echo esc_html__('Max Tokens', 'gpt3-ai-content-generator') ?>: </strong><input class="wpaicg-field-max-tokens" name="max_tokens" type="text" min="1" max="2048"></div>
                     <div class="mb-5 wpaicg-template-temperature"><strong><?php echo esc_html__('Temperature', 'gpt3-ai-content-generator') ?>: </strong><input name="temperature" type="text" min="0" max="1" step="any"></div>
                     <div class="mb-5 wpaicg-template-top_p"><strong><?php echo esc_html__('Top P', 'gpt3-ai-content-generator') ?>: </strong><input name="top_p" type="text" min="0" max="1"></div>
                     <div class="mb-5 wpaicg-template-best_of"><strong><?php echo esc_html__('Best Of', 'gpt3-ai-content-generator') ?>: </strong><input name="best_of" type="text" min="1" max="20"></div>
@@ -1062,6 +1062,22 @@ endif;
         $(document).on('click', '.wpaicg-create-form-prompt', function(e) {
             $('.wpaicg-create-template-form .wpaicg-template-prompts').append(wpaicgCreatePrompt.html());
             wpaicgSortPrompt();
+        });
+
+        $(document).on('change', '.wpaicg-create-template-engine', function(e) {
+            var selectedEngine = $(this).val();
+            var maxTokensInput = $('.wpaicg-field-max-tokens');
+            var maxtokens = 0;
+            if (selectedEngine === 'chatgpt-4o-latest') {
+                maxTokensInput.val(4000);
+                maxtokens = 4000;
+            } else {
+                maxTokensInput.val(2000);
+                maxtokens = 2000;
+            }
+            var wpaicg_estimated_cost = maxtokens !== '' ? parseFloat(maxtokens) * 0.002 / 1000 : 0;
+            wpaicg_estimated_cost = '$' + parseFloat(wpaicg_estimated_cost.toFixed(5));
+            $('.wpaicg-template-form .wpaicg-template-estimated span').html(wpaicg_estimated_cost);
         });
 
         $(document).on('change', '.wpaicg-create-template-field-type', function(e) {
@@ -2108,6 +2124,7 @@ endif;
             var template_title = form.find('.wpaicg-template-title').val();
             var response_type = form.find('.wpaicg-template-response-type').val();
             if (template_title !== '') {
+                var engine = form.find('.wpaicg-create-template-engine').val();
                 var max_tokens = form.find('.wpaicg-template-max_tokens input').val();
                 var temperature = form.find('.wpaicg-template-temperature input').val();
                 var top_p = form.find('.wpaicg-template-top_p input').val();
@@ -2117,7 +2134,9 @@ endif;
                 var error_message = false;
                 if (max_tokens === '') {
                     error_message = '<?php echo esc_html__('Please enter max tokens', 'gpt3-ai-content-generator') ?>';
-                } else if (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 4000) {
+                } else if (engine === 'chatgpt-4o-latest' && (parseFloat(max_tokens) < 4000 || parseFloat(max_tokens) > 16000)) {
+                    error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 4000, 16000) ?>';
+                } else if (engine !== 'chatgpt-4o-latest' && (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 4000)) {
                     error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 1, 4000) ?>';
                 } else if (temperature === '') {
                     error_message = '<?php echo esc_html__('Please enter temperature', 'gpt3-ai-content-generator') ?>';
