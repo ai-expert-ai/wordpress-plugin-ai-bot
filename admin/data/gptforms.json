@@ -1,0 +1,17 @@
+[
+    {
+        "id": 118,
+        "icon": "setting",
+        "color": "#34495E",
+        "title": "OpenAI Settings",
+        "description": "Set parameters of OpenAI API",
+        "category": "settting, openai api",
+        "max_tokens": 80,
+        "temperature": 0.5,
+        "frequency_penalty": 0.1,
+        "presence_penalty": 0.1,
+        "prompts": "Generate a catchy caption for a Facebook post about a new product launch. Product: {product}\n\n",
+        "response": "Ride into the future with our new Electric Bike! 🚴‍♂️💨 #electricbike #newproductlaunch",
+        "fields": []
+    }
+]
