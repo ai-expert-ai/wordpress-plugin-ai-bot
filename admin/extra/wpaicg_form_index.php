@@ -358,6 +358,23 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
         cursor: pointer;
     }
 
+    .wpaicg-prompt-delete{
+        position: absolute;
+        top: 4px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #b00;
+        border-radius: 2px;
+        color: #fff;
+        font-size: 20px;
+        font-family: Arial, serif;
+        cursor: pointer;
+    }
+
     .wpaicg-form-fields input[type=text],
     .wpaicg-form-fields select,
     .wpaicg-form-fields input[type=url],
@@ -408,10 +425,10 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
 <div class="wpaicg-template-form-prompt-default" style="display: none">
     <div class="wpaicg-template-form-prompt">
         <div class="wpaicg-mb-10">
-            <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Prompt', 'gpt3-ai-content-generator') ?></strong>
+            <strong class="wpaicg-d-block mb-5 wpaicg-create-template-prompt-title-label"><?php echo esc_html__('Prompt1', 'gpt3-ai-content-generator') ?></strong>
             <textarea rows="5" name="prompts[0]" required class="regular-text wpaicg-w-100 wpaicg-create-template-prompt-content" placeholder="Enter the prompt here."></textarea>
         </div>
-        <span class="wpaicg-field-delete">&times;</span>
+        <span class="wpaicg-prompt-delete">&times;</span>
     </div>
 </div>
 <div class="wpaicg-template-form-field-default" style="display: none">
@@ -1019,6 +1036,11 @@ endif;
             wpaicgSortField();
         });
 
+        $(document).on('click', '.wpaicg-prompt-delete', function(e) {
+            $(e.currentTarget).parent().remove();
+            wpaicgSortPrompt();
+        });
+
         function wpaicgSortField() {
             $('.wpaicg-create-template-form .wpaicg-template-form-field').each(function(idx, item) {
                 $.each(wpaicgFieldInputs, function(idxy, field) {
@@ -1057,8 +1079,11 @@ endif;
         function wpaicgSortPrompt() {
             $('.wpaicg-create-template-form .wpaicg-template-form-prompt').each(function(idx, item) {
                 $(item).find('.wpaicg-create-template-prompt-content').attr('name', 'prompts[' + idx + ']');
+                $(item).find('.wpaicg-create-template-prompt-title-label').text("Prompt" + (idx + 1));
             })
         }
+
+        // Add prompt in Edit your Template page
         $(document).on('click', '.wpaicg-create-form-prompt', function(e) {
             $('.wpaicg-create-template-form .wpaicg-template-prompts').append(wpaicgCreatePrompt.html());
             wpaicgSortPrompt();
@@ -1982,8 +2007,12 @@ endif;
             form.find('.wpaicg-template-stop-generate').show();
             form.find('.wpaicg-template-save-result').hide();
             var wpaicg_limitLines = parseInt(form.find('.wpaicg-template-max-lines').val());
+            
+            console.log("wpaicg_limitLines: ", wpaicg_limitLines);
+
             var count_line = 0;
             var currentContent = '';
+            var current_prompt_response = '';
             data += '&source_stream=form&nonce=<?php echo wp_create_nonce('wpaicg-ajax-nonce') ?>';
 
             eventGenerator = new EventSource('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>&' + data);
@@ -2042,7 +2071,9 @@ endif;
                     } else {
                         var content_generated = result.choices[0].delta !== undefined ? (result.choices[0].delta.content !== undefined ? result.choices[0].delta.content : '') : result.choices[0].text;
                     }
+                    
                     prompt_response += content_generated;
+                    current_prompt_response += content_generated;
                     if ((content_generated === '\n' || content_generated === ' \n' || content_generated === '.\n' || content_generated === '\n\n' || content_generated === '"\n') && wpaicg_response_events > 0 && currentContent !== '') {
                         if (!wpaicg_newline_before) {
                             wpaicg_newline_before = true;
@@ -2087,6 +2118,17 @@ endif;
                     }
                 }
                 if (count_line === wpaicg_limitLines) {
+                    console.log("current_prompt_response: ", current_prompt_response);
+                    
+                    var answer_id = "{answer" + (counter + 1) + "}";
+
+                    console.log("answer_id: ", answer_id);
+
+                    $.each(prompts, function(index, prompt) {
+                        prompts[index] = prompt.replace(new RegExp(answer_id, 'g'), current_prompt_response);
+                    });
+                    
+                    console.log("replaced prompts: ", prompts);
 
                     if (!wpaicg_limited_token) {
                         let endTime = new Date();
@@ -2134,7 +2176,7 @@ endif;
                 var error_message = false;
                 if (max_tokens === '') {
                     error_message = '<?php echo esc_html__('Please enter max tokens', 'gpt3-ai-content-generator') ?>';
-                } else if (engine === 'chatgpt-4o-latest' && (parseFloat(max_tokens) < 4000 || parseFloat(max_tokens) > 16000)) {
+                } else if (engine === 'chatgpt-4o-latest' && (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 16000)) {
                     error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 4000, 16000) ?>';
                 } else if (engine !== 'chatgpt-4o-latest' && (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 4000)) {
                     error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 1, 4000) ?>';
@@ -2226,7 +2268,8 @@ endif;
                         } else {
                             prompts.push(template_title);
                         }
-
+                        console.log('prompts: ', prompts, counter);
+                        
                         ai_generator(prompts, form, btn, prompt_response, response_type, counter);
                     }
                 }

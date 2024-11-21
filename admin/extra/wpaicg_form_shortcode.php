@@ -49,8 +49,8 @@ if (empty($user_openai_api_key)) {
 function my_enqueue_scripts()
 {
     // Get the file modification time to use as version
-    $version = filemtime(get_template_directory() . '/js/my-script.js');
-
+    $version = file_exists(get_template_directory() . '/js/my-script.js') ? filemtime(get_template_directory() . '/js/my-script.js') : "1.0.0";
+    
     // Register your script
     wp_register_script('my-script', get_template_directory_uri() . '/js/my-script.js', array('jquery'), $version, true);
 
