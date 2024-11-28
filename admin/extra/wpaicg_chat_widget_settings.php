@@ -10,10 +10,10 @@ if ( isset( $_POST['wpaicg_submit'] ) ) {
             /* translators: 1: minimum temperature, 2: maximum temperature */
             esc_html__('Please enter a valid temperature value between %1$d and %2$d.','gpt3-ai-content-generator'),0,1);
     }
-    if (isset($_POST['wpaicg_chat_max_tokens']) && ( !is_numeric( $_POST['wpaicg_chat_max_tokens'] ) || floatval( $_POST['wpaicg_chat_max_tokens'] ) < 64 || floatval( $_POST['wpaicg_chat_max_tokens'] ) > 8000 )) {
+    if (isset($_POST['wpaicg_chat_max_tokens']) && ( !is_numeric( $_POST['wpaicg_chat_max_tokens'] ) || floatval( $_POST['wpaicg_chat_max_tokens'] ) < 64 || floatval( $_POST['wpaicg_chat_max_tokens'] ) > 16000 )) {
         $errors = sprintf(
             /* translators: 1: minimum max_tokens, 2: maximum max_tokens */
-            esc_html__('Please enter a valid max token value between %1$d and %2$d.','gpt3-ai-content-generator'),64,8000);
+            esc_html__('Please enter a valid max token value between %1$d and %2$d.','gpt3-ai-content-generator'),64,16000);
     }
     if (isset($_POST['wpaicg_chat_top_p']) && (!is_numeric( $_POST['wpaicg_chat_top_p'] ) || floatval( $_POST['wpaicg_chat_top_p'] ) < 0 || floatval( $_POST['wpaicg_chat_top_p'] ) > 1 )){
         $errors = sprintf(

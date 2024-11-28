@@ -63,7 +63,7 @@ if (file_exists(WPAICG_PLUGIN_DIR . 'admin/data/gptforms.json')) {
 }
 
 $sql = "SELECT p.ID as id,p.post_title as title,p.post_author as author, p.post_content as description";
-$wpaicg_meta_keys = array('fields', 'editor', 'prompts', 'response', 'category', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
+$wpaicg_meta_keys = array('fields', 'editor', 'prompts', 'response','savememorykey' ,'category', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
 
 foreach ($wpaicg_meta_keys as $wpaicg_meta_key) {
     $sql .= $wpdb->prepare(
@@ -421,6 +421,10 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
     .wpaicg-template-item:before {
         display: none
     }
+
+    .use-memory-key-label {
+        cursor: pointer; 
+    }
 </style>
 <div class="wpaicg-template-form-prompt-default" style="display: none">
     <div class="wpaicg-template-form-prompt">
@@ -530,6 +534,12 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
             <div class="wpaicg-mb-10">
                 <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Sample Response', 'gpt3-ai-content-generator') ?></strong>
                 <textarea name="response" class="regular-text wpaicg-w-100 wpaicg-create-template-response"></textarea>
+            </div>
+            <div class="wpaicg-mb-10">
+                <div class="wpaicg-d-flex wpaicg-align-items-center">
+                    <strong class="wpaicg-d-block mb-5 use-memory-key-label" for="savememorykey"><?php echo esc_html__('Save Memory Key', 'gpt3-ai-content-generator') ?></strong>
+                    <input type="checkbox" id="savememorykey" class="wpaicg-create-template-savememorykey" name="savememorykey" style="margin-left: 10px;" checked value="True" />
+                </div>
             </div>
         </div>
         <div class="wpaicg-modal-tab wpaicg-modal-tab-ai-engine" style="display: none">
@@ -694,7 +704,7 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Num. Answers Text', 'gpt3-ai-content-generator') ?></strong>
-                    <input value="<?php echo esc_html__('Number of Answers', 'gpt3-ai-content-generator') ?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-template-noanswer_text">
+                    <input value="<?php echo esc_html__('Number of Answers 1', 'gpt3-ai-content-generator') ?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-template-noanswer_text">
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Draft Text', 'gpt3-ai-content-generator') ?></strong>
@@ -823,7 +833,46 @@ endif;
                             $wpaicg_fields = str_replace('\\', '', $wpaicg_fields);
                         }
                 ?>
-                        <div id="wpaicg-template-item-<?php echo esc_html($wpaicg_item['id']) ?>" data-fields="<?php echo esc_html($wpaicg_item['type'] == 'custom' ? $wpaicg_fields : json_encode($wpaicg_fields, JSON_UNESCAPED_UNICODE)) ?>" data-title="<?php echo esc_html($wpaicg_item['title']) ?>" data-type="<?php echo esc_html($wpaicg_item['type']) ?>" data-id="<?php echo esc_html($wpaicg_item['id']) ?>" data-post_title="<?php echo esc_html($wpaicg_item['title']) ?>" data-desc="<?php echo esc_html(@$wpaicg_item['description']) ?>" data-description="<?php echo esc_html(@$wpaicg_item['description']) ?>" data-icon="<?php echo esc_html(@$wpaicg_item['icon']) ?>" data-color="<?php echo esc_html($wpaicg_icon_color) ?>" data-engine="<?php echo esc_html($wpaicg_engine) ?>" data-max_tokens="<?php echo esc_html($wpaicg_max_tokens) ?>" data-temperature="<?php echo esc_html($wpaicg_temperature) ?>" data-top_p="<?php echo esc_html($wpaicg_top_p) ?>" data-best_of="<?php echo esc_html($wpaicg_best_of) ?>" data-frequency_penalty="<?php echo esc_html($wpaicg_frequency_penalty) ?>" data-presence_penalty="<?php echo esc_html($wpaicg_presence_penalty) ?>" data-stop="<?php echo esc_html($wpaicg_stop_lists) ?>" data-categories="<?php echo esc_html(implode(', ', $wpaicg_item_categories_name)) ?>" data-category="<?php echo esc_html($wpaicg_item['category']) ?>" data-prompts="<?php echo esc_html(@$wpaicg_item['prompts']); ?>" data-estimated="<?php echo isset($wpaicg_item['estimated']) ? esc_html($wpaicg_item['estimated']) : ''; ?>" data-response="<?php echo esc_html(@$wpaicg_item['response']); ?>" data-editor="<?php echo isset($wpaicg_item['editor']) && $wpaicg_item['editor'] == 'div' ? 'div' : 'textarea' ?>" data-header="<?php echo isset($wpaicg_item['header']) ? esc_html($wpaicg_item['header']) : ''; ?>" data-bgcolor="<?php echo isset($wpaicg_item['bgcolor']) ? esc_html($wpaicg_item['bgcolor']) : ''; ?>" data-dans="<?php echo isset($wpaicg_item['dans']) ? esc_html($wpaicg_item['dans']) : ''; ?>" data-ddraft="<?php echo isset($wpaicg_item['ddraft']) ? esc_html($wpaicg_item['ddraft']) : ''; ?>" data-dclear="<?php echo isset($wpaicg_item['dclear']) ? esc_html($wpaicg_item['dclear']) : ''; ?>" data-dnotice="<?php echo isset($wpaicg_item['dnotice']) ? esc_html($wpaicg_item['dnotice']) : ''; ?>" data-generate_text="<?php echo isset($wpaicg_item['generate_text']) && !empty($wpaicg_item['generate_text']) ? esc_html($wpaicg_item['generate_text']) : esc_html__('Generate', 'gpt3-ai-content-generator'); ?>" data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers', 'gpt3-ai-content-generator'); ?>" data-draft_text="<?php echo isset($wpaicg_item['draft_text']) && !empty($wpaicg_item['draft_text']) ? esc_html($wpaicg_item['draft_text']) : esc_html__('Save Draft', 'gpt3-ai-content-generator'); ?>" data-clear_text="<?php echo isset($wpaicg_item['clear_text']) && !empty($wpaicg_item['clear_text']) ? esc_html($wpaicg_item['clear_text']) : esc_html__('Clear', 'gpt3-ai-content-generator'); ?>" data-stop_text="<?php echo isset($wpaicg_item['stop_text']) && !empty($wpaicg_item['stop_text']) ? esc_html($wpaicg_item['stop_text']) : esc_html__('Stop', 'gpt3-ai-content-generator'); ?>" data-cnotice_text="<?php echo isset($wpaicg_item['cnotice_text']) && !empty($wpaicg_item['cnotice_text']) ? esc_html($wpaicg_item['cnotice_text']) : esc_html__('Please register to save your result', 'gpt3-ai-content-generator'); ?>" data-download_text="<?php echo isset($wpaicg_item['download_text']) && !empty($wpaicg_item['download_text']) ? esc_html($wpaicg_item['download_text']) : esc_html__('Download', 'gpt3-ai-content-generator'); ?>" data-ddownload="<?php echo isset($wpaicg_item['ddownload']) ? esc_html($wpaicg_item['ddownload']) : ''; ?>" class="wpaicg-template-item wpaicg-d-flex wpaicg-align-items-center <?php echo implode(' ', $wpaicg_item_categories) ?><?php echo ' user-' . esc_html($wpaicg_item['author']) ?><?php echo ' wpaicg-template-item-' . $wpaicg_item['type'] . '-' . esc_html($wpaicg_item['id']); ?>">
+                        <div 
+                            id="wpaicg-template-item-<?php echo esc_html($wpaicg_item['id']) ?>" 
+                            data-fields="<?php echo esc_html($wpaicg_item['type'] == 'custom' ? $wpaicg_fields : json_encode($wpaicg_fields, JSON_UNESCAPED_UNICODE)) ?>" 
+                            data-title="<?php echo esc_html($wpaicg_item['title']) ?>" 
+                            data-type="<?php echo esc_html($wpaicg_item['type']) ?>" 
+                            data-id="<?php echo esc_html($wpaicg_item['id']) ?>" 
+                            data-post_title="<?php echo esc_html($wpaicg_item['title']) ?>" 
+                            data-desc="<?php echo esc_html(@$wpaicg_item['description']) ?>" 
+                            data-description="<?php echo esc_html(@$wpaicg_item['description']) ?>" 
+                            data-savememorykey="<?php echo isset($wpaicg_item['savememorykey']) && $wpaicg_item['savememorykey'] == "True" ? "True" : "False" ?>" 
+                            data-icon="<?php echo esc_html(@$wpaicg_item['icon']) ?>" 
+                            data-color="<?php echo esc_html($wpaicg_icon_color) ?>" 
+                            data-engine="<?php echo esc_html($wpaicg_engine) ?>" 
+                            data-max_tokens="<?php echo esc_html($wpaicg_max_tokens) ?>" 
+                            data-temperature="<?php echo esc_html($wpaicg_temperature) ?>" 
+                            data-top_p="<?php echo esc_html($wpaicg_top_p) ?>" 
+                            data-best_of="<?php echo esc_html($wpaicg_best_of) ?>" 
+                            data-frequency_penalty="<?php echo esc_html($wpaicg_frequency_penalty) ?>" 
+                            data-presence_penalty="<?php echo esc_html($wpaicg_presence_penalty) ?>" 
+                            data-stop="<?php echo esc_html($wpaicg_stop_lists) ?>" 
+                            data-categories="<?php echo esc_html(implode(', ', $wpaicg_item_categories_name)) ?>" 
+                            data-category="<?php echo esc_html($wpaicg_item['category']) ?>" 
+                            data-prompts="<?php echo esc_html(@$wpaicg_item['prompts']); ?>" 
+                            data-estimated="<?php echo isset($wpaicg_item['estimated']) ? esc_html($wpaicg_item['estimated']) : ''; ?>" 
+                            data-response="<?php echo esc_html(@$wpaicg_item['response']); ?>" 
+                            data-editor="<?php echo isset($wpaicg_item['editor']) && $wpaicg_item['editor'] == 'div' ? 'div' : 'textarea' ?>" 
+                            data-header="<?php echo isset($wpaicg_item['header']) ? esc_html($wpaicg_item['header']) : ''; ?>" 
+                            data-bgcolor="<?php echo isset($wpaicg_item['bgcolor']) ? esc_html($wpaicg_item['bgcolor']) : ''; ?>" 
+                            data-dans="<?php echo isset($wpaicg_item['dans']) ? esc_html($wpaicg_item['dans']) : ''; ?>" 
+                            data-ddraft="<?php echo isset($wpaicg_item['ddraft']) ? esc_html($wpaicg_item['ddraft']) : ''; ?>" 
+                            data-dclear="<?php echo isset($wpaicg_item['dclear']) ? esc_html($wpaicg_item['dclear']) : ''; ?>" 
+                            data-dnotice="<?php echo isset($wpaicg_item['dnotice']) ? esc_html($wpaicg_item['dnotice']) : ''; ?>" 
+                            data-generate_text="<?php echo isset($wpaicg_item['generate_text']) && !empty($wpaicg_item['generate_text']) ? esc_html($wpaicg_item['generate_text']) : esc_html__('Generate', 'gpt3-ai-content-generator'); ?>" 
+                            data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers 2', 'gpt3-ai-content-generator'); ?>" 
+                            data-draft_text="<?php echo isset($wpaicg_item['draft_text']) && !empty($wpaicg_item['draft_text']) ? esc_html($wpaicg_item['draft_text']) : esc_html__('Save Draft', 'gpt3-ai-content-generator'); ?>" 
+                            data-clear_text="<?php echo isset($wpaicg_item['clear_text']) && !empty($wpaicg_item['clear_text']) ? esc_html($wpaicg_item['clear_text']) : esc_html__('Clear', 'gpt3-ai-content-generator'); ?>" 
+                            data-stop_text="<?php echo isset($wpaicg_item['stop_text']) && !empty($wpaicg_item['stop_text']) ? esc_html($wpaicg_item['stop_text']) : esc_html__('Stop', 'gpt3-ai-content-generator'); ?>" 
+                            data-cnotice_text="<?php echo isset($wpaicg_item['cnotice_text']) && !empty($wpaicg_item['cnotice_text']) ? esc_html($wpaicg_item['cnotice_text']) : esc_html__('Please register to save your result', 'gpt3-ai-content-generator'); ?>" 
+                            data-download_text="<?php echo isset($wpaicg_item['download_text']) && !empty($wpaicg_item['download_text']) ? esc_html($wpaicg_item['download_text']) : esc_html__('Download', 'gpt3-ai-content-generator'); ?>" 
+                            data-ddownload="<?php echo isset($wpaicg_item['ddownload']) ? esc_html($wpaicg_item['ddownload']) : ''; ?>" class="wpaicg-template-item wpaicg-d-flex wpaicg-align-items-center <?php echo implode(' ', $wpaicg_item_categories) ?><?php echo ' user-' . esc_html($wpaicg_item['author']) ?><?php echo ' wpaicg-template-item-' . $wpaicg_item['type'] . '-' . esc_html($wpaicg_item['id']); ?>">
                             <div class="wpaicg-template-icon" style="background: <?php echo esc_html($wpaicg_icon_color) ?>"><?php echo wp_kses($wpaicg_icon, $allowed_tags) ?></div>
                             <div class="wpaicg-template-content">
                                 <strong><?php echo isset($wpaicg_item['title']) && !empty($wpaicg_item['title']) ? esc_html($wpaicg_item['title']) : '' ?></strong>
@@ -864,7 +913,7 @@ endif;
                 <textarea style="display: none" name="title" class="wpaicg-template-title-filled" rows="8"></textarea>
                 <div class="wpaicg-form-fields"></div>
                 <div class="wpaicg-mb-10">
-                    <strong class="wpaicg-template-text-noanswer_text"><?php echo esc_html__('Number of Answers', 'gpt3-ai-content-generator') ?></strong>
+                    <strong class="wpaicg-template-text-noanswer_text"><?php echo esc_html__('Number of Answers 3', 'gpt3-ai-content-generator') ?></strong>
                     <select class="wpaicg-template-max-lines">
                         <?php
                         for ($i = 1; $i <= 10; $i++) {
@@ -1158,7 +1207,13 @@ endif;
             }
         });
 
-
+        $(document).on('change', '.wpaicg-create-template-savememorykey', function() {
+            if ($(this).is(':checked')) {
+                $(this).val('True');
+            } else {
+                $(this).val('False');
+            }
+        });
 
         // open edit panel
         $(document).on('click', '.wpaicg-template-item .wpaicg-template-action-edit', function(e) {
@@ -1168,7 +1223,7 @@ endif;
             $('.wpaicg_modal_title').html('<?php echo esc_html__('Edit your Template', 'gpt3-ai-content-generator') ?>');
             $('.wpaicg_modal_content').html('<form action="" method="post" class="wpaicg-create-template-form">' + wpaicgTemplateContent.html() + '</form>');
             var form = $('.wpaicg-create-template-form');
-            var wpaicg_template_keys = ['engine', 'editor', 'title', 'description', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'prompts', 'response', 'category', 'icon', 'color', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload'];
+            var wpaicg_template_keys = ['engine', 'editor', 'title', 'description', 'max_tokens', 'savememorykey', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'prompts', 'response', 'category', 'icon', 'color', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload'];
             for (var i = 0; i < wpaicg_template_keys.length; i++) {
                 var wpaicg_template_key = wpaicg_template_keys[i];
                 var wpaicg_template_key_value = item.attr('data-' + wpaicg_template_key);
@@ -1178,6 +1233,15 @@ endif;
                         wpaicg_template_key_value = 'robot';
                     }
                     $('.wpaicg-create-template-form .wpaicg-template-icons span[data-key=' + wpaicg_template_key_value + ']').addClass('icon_selected');
+                }
+                if (wpaicg_template_key === 'savememorykey') {
+                    if (wpaicg_template_key_value === 'True') {
+                        form.find('.wpaicg-create-template-savememorykey').prop('checked', true);
+                        form.find('.wpaicg-create-template-savememorykey').val("True");
+                    } else {
+                        form.find('.wpaicg-create-template-savememorykey').prop('checked', false);
+                        form.find('.wpaicg-create-template-savememorykey').val("False");
+                    }
                 }
             }
 
@@ -1322,8 +1386,9 @@ endif;
             var error_message = false;
             var data = form.serialize();
 
-            if (max_tokens !== '' && (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 8000)) {
-                error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 0, 8000) ?>';
+
+            if (max_tokens !== '' && (parseFloat(max_tokens) < 1 || parseFloat(max_tokens) > 16000)) {
+                error_message = '<?php echo sprintf(esc_html__('Please enter a valid max token value between %d and %d.', 'gpt3-ai-content-generator'), 0, 16000) ?>';
             } else if (temperature !== '' && (parseFloat(temperature) < 0 || parseFloat(temperature) > 1)) {
                 error_message = '<?php echo sprintf(esc_html__('Please enter a valid temperature value between %d and %d.', 'gpt3-ai-content-generator'), 0, 1) ?>';
             } else if (top_p !== '' && (parseFloat(top_p) < 0 || parseFloat(top_p) > 1)) {
@@ -1370,6 +1435,12 @@ endif;
                         data = updateFormData(data, form_name, prompt);
                     })
                 }
+                if (form.find('.wpaicg-create-template-savememorykey').val() === 'True') {
+                    data = updateFormData(data, 'savememorykey', 'True');
+                } else {
+                    data = updateFormData(data, 'savememorykey', 'False');
+                }
+
                 if (error_message) {
                     alert(error_message)
                 } else {
@@ -1723,7 +1794,6 @@ endif;
                 success: function(response) {
                     // Handle successful response here
                     alert('Successfully saved.');
-                    console.log(response);
                 },
                 error: function(error) {
                     // Handle error here
@@ -1741,6 +1811,8 @@ endif;
             var id = item.attr('data-id');
             var type = item.attr('data-type');
             var categories = item.attr('data-categories');
+            var savememorykey = item.attr('data-savememorykey');
+            console.log("savememorykey: ", savememorykey);
 
             if (id !== "118") {
                 prompt_name = title;
@@ -1753,6 +1825,9 @@ endif;
                 }
                 var modal_head = '<div class="wpaicg-d-flex wpaicg-align-items-center wpaicg-modal-template-head"><div style="margin-left: 10px;">';
                 modal_head += '<strong>' + title + '</strong>';
+                // save memory key flag
+                modal_head += '<strong class="wpaicg-template-savememorykey" style="display: none;">' + savememorykey + '</strong>';
+
                 if (categories !== '') {
                     modal_head += '<div><small>' + categories + '</small></div>';
                 }
@@ -1980,7 +2055,7 @@ endif;
             }
         }
 
-        function ai_generator(prompts, form, btn, prompt_response, response_type, counter) {
+        function ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag) {
             let startTime = new Date();
 
             $('.wpaicg-template-title-filled').val(prompts[counter] + ".\n\n");
@@ -2008,8 +2083,6 @@ endif;
             form.find('.wpaicg-template-save-result').hide();
             var wpaicg_limitLines = parseInt(form.find('.wpaicg-template-max-lines').val());
             
-            console.log("wpaicg_limitLines: ", wpaicg_limitLines);
-
             var count_line = 0;
             var currentContent = '';
             var current_prompt_response = '';
@@ -2126,6 +2199,12 @@ endif;
 
                     $.each(prompts, function(index, prompt) {
                         prompts[index] = prompt.replace(new RegExp(answer_id, 'g'), current_prompt_response);
+                        if (memorykeyflag === 'True') {
+                            console.log("adding chat history...");
+                            if (index === counter && counter < prompts.length - 1) {
+                                prompts[counter + 1] = prompts[counter] + "\n" + current_prompt_response + "\n" + prompts[counter + 1];
+                            }
+                        }
                     });
                     
                     console.log("replaced prompts: ", prompts);
@@ -2150,7 +2229,7 @@ endif;
                     wpaicgRmLoading(btn);
                     if (counter < prompts.length - 1) {
                         counter++;
-                        ai_generator(prompts, form, btn, prompt_response, response_type, counter)
+                        ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag)
                     } else {
                         return false
                     }
@@ -2165,6 +2244,10 @@ endif;
             var btn = form.find('.wpaicg-generate-button');
             var template_title = form.find('.wpaicg-template-title').val();
             var response_type = form.find('.wpaicg-template-response-type').val();
+
+            var savememorykey = form.parent().parent().parent().find('.wpaicg-template-savememorykey').text();
+            console.log("savememorykey: ", savememorykey);
+
             if (template_title !== '') {
                 var engine = form.find('.wpaicg-create-template-engine').val();
                 var max_tokens = form.find('.wpaicg-template-max_tokens input').val();
@@ -2270,7 +2353,7 @@ endif;
                         }
                         console.log('prompts: ', prompts, counter);
                         
-                        ai_generator(prompts, form, btn, prompt_response, response_type, counter);
+                        ai_generator(prompts, form, btn, prompt_response, response_type, counter, savememorykey);
                     }
                 }
             } else {

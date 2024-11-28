@@ -80,8 +80,8 @@ if ( isset( $_POST['wpaicg_submit'] ) ) {
     }
 
 
-    if ( !is_numeric( $max_tokens ) || floatval( $max_tokens ) < 64 || floatval( $max_tokens ) > 8000 ) {
-        $errors = sprintf(esc_html__('Please enter a valid max token value between %d and %d.','gpt3-ai-content-generator'),64,8000);
+    if ( !is_numeric( $max_tokens ) || floatval( $max_tokens ) < 64 || floatval( $max_tokens ) > 16000 ) {
+        $errors = sprintf(esc_html__('Please enter a valid max token value between %d and %d.','gpt3-ai-content-generator'),64,16000);
         $flag = false;
     }
 

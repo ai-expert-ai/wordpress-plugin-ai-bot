@@ -328,7 +328,7 @@ if (!class_exists('\\WPAICG\\WPAICG_Forms')) {
                         'post_status' => 'publish'
                     ));
                 }
-                $template_fields = array('fields', 'prompts', 'response', 'category', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'editor', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
+                $template_fields = array('fields', 'prompts', 'response', 'savememorykey', 'category', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'editor', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
                 foreach ($template_fields as $template_field) {
                     if (isset($_POST[$template_field]) && !empty($_POST[$template_field])) {
                         $value = wpaicg_util_core()->sanitize_text_or_array_field($_POST[$template_field]);
