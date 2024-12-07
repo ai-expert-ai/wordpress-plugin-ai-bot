@@ -509,7 +509,7 @@ $allowed_tags = array_merge( $kses_defaults, $svg_args );
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Num. Answers Text','gpt3-ai-content-generator')?></strong>
-                    <input value="<?php echo esc_html__('Number of Answers 6','gpt3-ai-content-generator')?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-prompt-noanswer_text">
+                    <input value="<?php echo esc_html__('Number of Answers','gpt3-ai-content-generator')?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-prompt-noanswer_text">
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Draft Text','gpt3-ai-content-generator')?></strong>
@@ -657,7 +657,7 @@ endif;
                             data-dclear="<?php echo isset($wpaicg_item['dclear']) ? esc_html($wpaicg_item['dclear']) : '';?>"
                             data-dnotice="<?php echo isset($wpaicg_item['dnotice']) ? esc_html($wpaicg_item['dnotice']) : '';?>"
                             data-generate_text="<?php echo isset($wpaicg_item['generate_text']) && !empty($wpaicg_item['generate_text']) ? esc_html($wpaicg_item['generate_text']) : esc_html__('Generate','gpt3-ai-content-generator');?>"
-                            data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers 7','gpt3-ai-content-generator');?>"
+                            data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers','gpt3-ai-content-generator');?>"
                             data-draft_text="<?php echo isset($wpaicg_item['draft_text']) && !empty($wpaicg_item['draft_text']) ? esc_html($wpaicg_item['draft_text']) : esc_html__('Save Draft','gpt3-ai-content-generator');?>"
                             data-clear_text="<?php echo isset($wpaicg_item['clear_text']) && !empty($wpaicg_item['clear_text']) ? esc_html($wpaicg_item['clear_text']) : esc_html__('Clear','gpt3-ai-content-generator');?>"
                             data-stop_text="<?php echo isset($wpaicg_item['stop_text']) && !empty($wpaicg_item['stop_text']) ? esc_html($wpaicg_item['stop_text']) : esc_html__('Stop','gpt3-ai-content-generator');?>"
@@ -703,7 +703,7 @@ endif;
                 <strong><?php echo esc_html__('Prompt','gpt3-ai-content-generator')?></strong>
                 <div class="wpaicg-mb-10">
                     <textarea name="title" class="wpaicg-prompt-title" rows="8"></textarea>
-                    <strong class="wpaicg-prompt-text-noanswer_text"><?php echo esc_html__('Number of Answers 8','gpt3-ai-content-generator')?></strong>
+                    <strong class="wpaicg-prompt-text-noanswer_text"><?php echo esc_html__('Number of Answers','gpt3-ai-content-generator')?></strong>
                     <select class="wpaicg-prompt-max-lines">
                         <?php
                         for($i=1;$i<=10;$i++){

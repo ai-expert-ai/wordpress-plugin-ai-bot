@@ -1390,7 +1390,6 @@ $wpaicg_bots = new WP_Query($args);
             return true;
         });
         $(document).on('change','.wpaicg_chatbot_voice_service',function(e){
-            console.log('accc');
             let parent = $(e.currentTarget).parent().parent();
             if($(e.currentTarget).val() === 'google'){
                 parent.find('.wpaicg_voice_service_elevenlabs').hide();

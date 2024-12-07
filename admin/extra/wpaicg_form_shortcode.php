@@ -109,7 +109,7 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
     }
     if ($wpaicg_custom) {
         $sql = "SELECT p.ID as id,p.post_title as title, p.post_content as description";
-        $wpaicg_meta_keys = array('prompts', 'editor', 'fields', 'response', 'category', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
+        $wpaicg_meta_keys = array('prompts', 'editor', 'fields', 'response', 'category', 'savememorykey', 'engine', 'max_tokens', 'temperature', 'top_p', 'best_of', 'frequency_penalty', 'presence_penalty', 'stop', 'color', 'icon', 'bgcolor', 'header', 'dans', 'ddraft', 'dclear', 'dnotice', 'generate_text', 'noanswer_text', 'draft_text', 'clear_text', 'stop_text', 'cnotice_text', 'download_text', 'ddownload');
         foreach ($wpaicg_meta_keys as $wpaicg_meta_key) {
             $sql .= ", (" . $wpdb->prepare(
                 "SELECT " . $wpaicg_meta_key . ".meta_value FROM " . $wpdb->postmeta . " " . $wpaicg_meta_key . " WHERE " . $wpaicg_meta_key . ".meta_key=%s AND p.ID=" . $wpaicg_meta_key . ".post_id LIMIT 1",
@@ -124,6 +124,7 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
     }
     if ($wpaicg_item) {
         $id = $wpaicg_item['id'];
+        $wpaicg_savememorykey = isset($wpaicg_item['savememorykey']) && !empty($wpaicg_item['color']) ? $wpaicg_item['savememorykey'] : 'False';
         $wpaicg_item_categories = array();
         $wpaicg_item_categories_name = array();
         if (isset($wpaicg_item['category']) && !empty($wpaicg_item['category'])) {
@@ -144,7 +145,7 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
         $wpaicg_stop = isset($wpaicg_item['stop']) && !empty($wpaicg_item['stop']) ? $wpaicg_item['stop'] : $this->wpaicg_stop;
         $wpaicg_generate_text = isset($wpaicg_item['generate_text']) && !empty($wpaicg_item['generate_text']) ? $wpaicg_item['generate_text'] : esc_html__('Generate', 'gpt3-ai-content-generator');
         $wpaicg_draft_text = isset($wpaicg_item['draft_text']) && !empty($wpaicg_item['draft_text']) ? $wpaicg_item['draft_text'] : esc_html__('Save Draft', 'gpt3-ai-content-generator');
-        $wpaicg_noanswer_text = isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? $wpaicg_item['noanswer_text'] : esc_html__('Number of Answers 4', 'gpt3-ai-content-generator');
+        $wpaicg_noanswer_text = isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? $wpaicg_item['noanswer_text'] : esc_html__('Number of Answers', 'gpt3-ai-content-generator');
         $wpaicg_clear_text = isset($wpaicg_item['clear_text']) && !empty($wpaicg_item['clear_text']) ? $wpaicg_item['clear_text'] : esc_html__('Clear', 'gpt3-ai-content-generator');
         $wpaicg_stop_text = isset($wpaicg_item['stop_text']) && !empty($wpaicg_item['stop_text']) ? $wpaicg_item['stop_text'] : esc_html__('Stop', 'gpt3-ai-content-generator');
         $wpaicg_cnotice_text = isset($wpaicg_item['cnotice_text']) && !empty($wpaicg_item['cnotice_text']) ? $wpaicg_item['cnotice_text'] : esc_html__('Please register to save your result', 'gpt3-ai-content-generator');
@@ -392,6 +393,10 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
                 margin-bottom: 10px;
             }
 
+            .wpaicg-form-field .ai-description-label{
+                font-size: 16px;
+            }
+
             /* --------------------------- start -------------------------- */
 
             .wpaicg_sync_finetune {
@@ -550,11 +555,12 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
         $allowed_tags = array_merge($kses_defaults, $svg_args);
         $randomFormID = rand(100000, 999999);
         ?>
-        <div class="wpaicg-prompt-item wpaicg-playground-shortcode" style="<?php echo isset($wpaicg_item['bgcolor']) && !empty($wpaicg_item['bgcolor']) ? 'background-color:' . esc_html($wpaicg_item['bgcolor']) : ''; ?>">
+        <div class="wpaicg-prompt-item wpaicg-playground-shortcode asdf" style="<?php echo isset($wpaicg_item['bgcolor']) && !empty($wpaicg_item['bgcolor']) ? 'background-color:' . esc_html($wpaicg_item['bgcolor']) : ''; ?>">
             <div class="wpaicg-prompt-head" style="<?php echo isset($wpaicg_item['header']) && $wpaicg_item['header'] == 'no' ? 'display: none;' : ''; ?>">
                 <div class="wpaicg-prompt-icon" style="background: <?php echo esc_html($wpaicg_icon_color) ?>"><?php echo wp_kses($wpaicg_icon, $allowed_tags) ?></div>
-                <div class="">
+                <div class="wpaicg-prompt-titlendescription">
                     <strong><?php echo isset($wpaicg_item['title']) && !empty($wpaicg_item['title']) ? esc_html($wpaicg_item['title']) : '' ?></strong>
+                    
                     <?php
                     if (isset($wpaicg_item['description']) && !empty($wpaicg_item['description'])) {
                         echo '<p>' . esc_html($wpaicg_item['description']) . '</p>';
@@ -662,6 +668,7 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
                                         </div>
                                         <button style="<?php echo isset($wpaicg_item['dans']) && $wpaicg_item['dans'] == 'no' ? 'margin-left:0' : '' ?>" class="wpaicg-button wpaicg-generate-button" id="wpaicg-generate-button"><?php echo esc_html($wpaicg_generate_text); ?></button>
                                         &nbsp;<button data-id="<?php echo esc_html($randomFormID) ?>" type="button" class="wpaicg-button wpaicg-prompt-stop-generate" id="wpaicg-prompt-stop-generate" style="display: none"><?php echo esc_html($wpaicg_stop_text); ?></button>
+                                        <strong class="wpaicg-prompt-savememorykey" style="display: none;"><?php echo isset($wpaicg_item['savememorykey']) && !empty($wpaicg_item['savememorykey']) ? esc_html($wpaicg_item['savememorykey']) : '' ?></strong>
                                     </div>
                                 </div>
                                 <div class="mb-5">
@@ -881,7 +888,6 @@ if (isset($atts) && is_array($atts) && isset($atts['id']) && !empty($atts['id'])
                         success: function(response) {
                             // Handle successful response here
                             alert('Successfully saved.');
-                            console.log(response);
                         },
                         error: function(error) {
                             // Handle error here

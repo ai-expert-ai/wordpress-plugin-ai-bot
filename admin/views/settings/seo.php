@@ -183,7 +183,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
         });
         $('#rank_math_description').on('click', function (){
             if($(this).prop('checked')){
-                console.log('acccc');
                 $('#_aioseo_description').prop('checked', false);
                 $('#_yoast_wpseo_metadesc').prop('checked', false);
                 $('#_wpaicg_seo_meta_tag').prop('checked', false);

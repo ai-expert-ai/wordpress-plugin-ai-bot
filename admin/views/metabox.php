@@ -1857,7 +1857,6 @@ echo  esc_html__( 'No heading found.', 'gpt3-ai-content-generator' ) ;
         jQuery('.modal-backdrop').hide();
         jQuery('.wpcgai_lds-ellipsis').hide();
         clearTimeout(window['wpaicgTimer']);
-        console.log('acc');
         jQuery('#wpcgai_load_plugin_settings').removeAttr('disabled');
         jQuery('#wpcgai_load_plugin_settings .spinner').remove();
         e.stopPropagation();

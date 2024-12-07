@@ -233,7 +233,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
             let selected = selection.find('option:selected');
             let parameters = selected.attr('data-parameters');
             parameters = JSON.parse(parameters);
-            console.log(val);
             if(val > 0){
                 $('.wpaicg_custom_template_title').val(selected.text().trim());
                 $('.wpaicg_custom_template_title').after('<input class="wpaicg_custom_template_id" type="hidden" name="id" value="'+val+'">');

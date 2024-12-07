@@ -224,6 +224,12 @@ var wpaicgPlayGround = {
           var frequency_penalty = wpaicgFP.value;
           var presence_penalty = wpaicgPP.value;
           var error_message = false;
+
+          // Save memory key
+          var savememorykey = document.querySelector(
+            ".wpaicg-prompt-savememorykey"
+          ).textContent;
+
           var title = wpaicgPromptTitle.value;
           if (title === "") {
             error_message = "Please insert prompt";
@@ -272,7 +278,10 @@ var wpaicgPlayGround = {
           if (error_message) {
             alert(error_message);
           } else {
-            if (typeof wpaicgFormData.fields === "object") {
+            if (
+              typeof wpaicgFormData.fields === "object" &&
+              wpaicgFormData.fields
+            ) {
               for (var i = 0; i < wpaicgFormData.fields.length; i++) {
                 var form_field = wpaicgFormData.fields[i];
                 var field = wpaicgForm.getElementsByClassName(
@@ -288,6 +297,7 @@ var wpaicgPlayGround = {
                   form_field["min"] !== undefined ? form_field["min"] : "";
                 var field_max =
                   form_field["max"] !== undefined ? form_field["max"] : "";
+
                 if (field_type !== "radio" && field_type !== "checkbox") {
                   var field_value = field.value;
                   if (
@@ -352,10 +362,14 @@ var wpaicgPlayGround = {
                 }
               }
             }
+
             if (error_message) {
               alert(error_message);
             } else {
-              if (typeof wpaicgFormData.fields === "object") {
+              if (
+                typeof wpaicgFormData.fields === "object" &&
+                wpaicgFormData.fields
+              ) {
                 for (var i = 0; i < wpaicgFormData.fields.length; i++) {
                   var form_field = wpaicgFormData.fields[i];
                   var field_type = form_field.type;
@@ -403,7 +417,11 @@ var wpaicgPlayGround = {
                       /\\u00a/g,
                       "\n"
                     );
-                    if (typeof wpaicgFormData.fields === "object") {
+
+                    if (
+                      typeof wpaicgFormData.fields === "object" &&
+                      wpaicgFormData.fields
+                    ) {
                       for (var i = 0; i < wpaicgFormData.fields.length; i++) {
                         var form_field = wpaicgFormData.fields[i];
                         var field_type = form_field.type;
@@ -469,7 +487,8 @@ var wpaicgPlayGround = {
                 wpaicgStop,
                 wpaicgSaveResult,
                 wpaicgGenerateBtn,
-                wpaicgMaxLines
+                wpaicgMaxLines,
+                savememorykey
               );
             }
           }
@@ -489,12 +508,21 @@ var wpaicgPlayGround = {
     wpaicgStop,
     wpaicgSaveResult,
     wpaicgGenerateBtn,
-    wpaicgMaxLines
+    wpaicgMaxLines,
+    savememorykey
   ) {
+    // console.log("Process started");
     if (formSource === "form") {
       wpaicgPromptTitleFilled.value = prompts[counter] + ".\n\n";
     }
     let queryString = new URLSearchParams(new FormData(wpaicgForm)).toString();
+    let params = new URLSearchParams(new FormData(wpaicgForm));
+    let formData = new FormData();
+    params.forEach((value, key) => {
+      // console.log(value, key);
+      formData.append(key, value);
+    });
+
     wpaicg_PlayGround.loading.add(wpaicgGenerateBtn);
     wpaicgSaveResult.style.display = "none";
     wpaicgStop.style.display = "inline";
@@ -503,11 +531,16 @@ var wpaicgPlayGround = {
     }
     queryString +=
       "&source_stream=" + formSource + "&nonce=" + wpaicgFormData.ajax_nonce;
+    formData.append("source_stream", formSource);
+    formData.append("nonce", wpaicgFormData.ajax_nonce);
+
+    // console.log("formData", formData);
+
     var eventID = Math.ceil(Math.random() * 1000000);
     wpaicgStop.setAttribute("data-event", eventID);
-    window["eventGenerator" + eventID] = new EventSource(
-      wpaicgFormData.event + "&" + queryString
-    );
+    // window["eventGenerator" + eventID] = new EventSource(
+    //   wpaicgFormData.event + "&" + queryString
+    // );
     if (formSource === "form") {
       queryString += "&action=wpaicg_form_log";
     } else {
@@ -524,163 +557,453 @@ var wpaicgPlayGround = {
     var count_line = 0;
     var wpaicg_limitLines = parseFloat(wpaicgMaxLines.value);
     var currentContent = "";
-    window["eventGenerator" + eventID].onmessage = function (e) {
-      currentContent = wpaicg_PlayGround.getContent(
-        wpaicgFormData.response,
-        formID
-      );
 
-      var resultData = JSON.parse(e.data);
-
-      // Check if the response contains the finish_reason property and if it's set to "stop"
-      var hasFinishReason =
-        resultData.choices &&
-        resultData.choices[0] &&
-        (resultData.choices[0].finish_reason === "stop" ||
-          resultData.choices[0].finish_reason === "length");
-
-      if (hasFinishReason) {
-        count_line += 1;
-        wpaicg_PlayGround.setContent(
-          wpaicgFormData.response,
-          formID,
-          currentContent + wpaicg_break_newline
-        );
-        wpaicg_response_events = 0;
-      } else if (e.data === "[LIMITED]") {
-        wpaicg_limited_token = true;
-        count_line += 1;
-        wpaicg_PlayGround.setContent(
-          wpaicgFormData.response,
-          formID,
-          currentContent + wpaicg_break_newline
-        );
-        wpaicg_response_events = 0;
-      } else {
-        var result = JSON.parse(e.data);
-        var content_generated = "";
-        if (result.error !== undefined) {
-          content_generated = result.error.message;
-        } else {
-          content_generated =
-            result.choices[0].delta !== undefined
-              ? result.choices[0].delta.content !== undefined
-                ? result.choices[0].delta.content
-                : ""
-              : result.choices[0].text;
+    // console.log("queryString", queryString);
+    // console.log("form", wpaicgForm);
+    // console.log(wpaicgFormData.event);
+    fetch(wpaicgFormData.event, {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        // console.log("response", response);
+        if (!response.ok) {
+          // console.log("Error with the fetch request:", response.statusText);
+          return;
         }
-        prompt_response += content_generated;
 
-        if (
-          (content_generated === "\n" ||
-            content_generated === " \n" ||
-            content_generated === ".\n" ||
-            content_generated === "\n\n" ||
-            content_generated === '"\n') &&
-          wpaicg_response_events > 0 &&
-          currentContent !== ""
-        ) {
-          if (!wpaicg_newline_before) {
-            wpaicg_newline_before = true;
-            wpaicg_PlayGround.setContent(
-              wpaicgFormData.response,
-              formID,
-              currentContent + wpaicg_break_newline
-            );
-          }
-        } else if (
-          content_generated.indexOf("\n") > -1 &&
-          wpaicg_response_events > 0 &&
-          currentContent !== ""
-        ) {
-          if (!wpaicg_newline_before) {
-            wpaicg_newline_before = true;
-            if (wpaicgFormData.response === "textarea") {
-              if (!wpaicg_PlayGround.editor(formID)) {
-                content_generated = content_generated.replace(/\n/g, "<br>");
+        var eventReader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        var buffer = "";
+
+        function read() {
+          eventReader.read().then(({ done, value }) => {
+            try {
+              buffer += decoder.decode(value, { stream: true });
+              // console.log("buffer", buffer);
+              let boundary = buffer.indexOf("\n");
+              while (boundary !== -1) {
+                let chunk = buffer.substring(0, boundary).trim();
+                buffer = buffer.substring(boundary + 1);
+                boundary = buffer.indexOf("\n");
+
+                if (chunk.startsWith("data:")) {
+                  chunk = chunk.substring(5).trim();
+                  // console.log("chunk", chunk);
+                  if (chunk) {
+                    try {
+                      if (chunk === "[DONE]") {
+                        return;
+                      }
+                      currentContent = wpaicg_PlayGround.getContent(
+                        wpaicgFormData.response,
+                        formID
+                      );
+                      try {
+                        var resultData = JSON.parse(chunk);
+                      } catch (err) {
+                        // console.log("err1", err);
+                        return;
+                      }
+                      // Handle the received message here
+                      var hasFinishReason =
+                        resultData?.choices &&
+                        resultData?.choices?.[0] &&
+                        (resultData?.choices?.[0]?.finish_reason === "stop" ||
+                          resultData?.choices?.[0]?.finish_reason === "length");
+
+                      if (hasFinishReason) {
+                        // console.log(
+                        //   "hasFinishReason",
+                        //   resultData?.choices[0]?.finish_reason
+                        // );
+                        count_line += 1;
+                        wpaicg_PlayGround.setContent(
+                          wpaicgFormData.response,
+                          formID,
+                          currentContent + wpaicg_break_newline
+                        );
+                        wpaicg_response_events = 0;
+                      } else if (chunk === "[LIMITED]") {
+                        // console.log("Limited");
+                        wpaicg_limited_token = true;
+                        count_line += 1;
+                        wpaicg_PlayGround.setContent(
+                          wpaicgFormData.response,
+                          formID,
+                          currentContent + wpaicg_break_newline
+                        );
+                        wpaicg_response_events = 0;
+                      } else {
+                        try {
+                          var result = JSON.parse(chunk);
+                          // console.log("result", result);
+                        } catch (err) {
+                          // console.log("err2", err);
+                          return;
+                        }
+
+                        var content_generated = "";
+                        if (result.error !== undefined) {
+                          content_generated = result.error.message;
+                        } else {
+                          content_generated =
+                            result.choices[0].delta !== undefined
+                              ? result.choices[0].delta.content !== undefined
+                                ? result.choices[0].delta.content
+                                : ""
+                              : result.choices[0].text;
+                        }
+                        prompt_response += content_generated;
+                        // console.log("content_generated", content_generated);
+
+                        if (
+                          (content_generated === "\n" ||
+                            content_generated === " \n" ||
+                            content_generated === ".\n" ||
+                            content_generated === "\n\n" ||
+                            content_generated === '"\n') &&
+                          wpaicg_response_events > 0 &&
+                          currentContent !== ""
+                        ) {
+                          if (!wpaicg_newline_before) {
+                            wpaicg_newline_before = true;
+                            wpaicg_PlayGround.setContent(
+                              wpaicgFormData.response,
+                              formID,
+                              currentContent + wpaicg_break_newline
+                            );
+                          }
+                        } else if (
+                          content_generated.indexOf("\n") > -1 &&
+                          wpaicg_response_events > 0 &&
+                          currentContent !== ""
+                        ) {
+                          if (!wpaicg_newline_before) {
+                            wpaicg_newline_before = true;
+                            if (wpaicgFormData.response === "textarea") {
+                              if (!wpaicg_PlayGround.editor(formID)) {
+                                content_generated = content_generated.replace(
+                                  /\n/g,
+                                  "<br>"
+                                );
+                              }
+                            } else {
+                              content_generated = content_generated.replace(
+                                /\n/g,
+                                "<br>"
+                              );
+                            }
+                            wpaicg_PlayGround.setContent(
+                              wpaicgFormData.response,
+                              formID,
+                              currentContent + content_generated
+                            );
+                          }
+                        } else if (
+                          content_generated === "\n" &&
+                          wpaicg_response_events === 0 &&
+                          currentContent === ""
+                        ) {
+                        } else {
+                          wpaicg_newline_before = false;
+                          wpaicg_response_events += 1;
+                          wpaicg_PlayGround.setContent(
+                            wpaicgFormData.response,
+                            formID,
+                            currentContent + content_generated
+                          );
+                        }
+                      }
+                      if (count_line === wpaicg_limitLines) {
+                        var answer_id = "{answer" + (counter + 1) + "}";
+
+                        for (let index = 0; index < prompts.length; index++) {
+                          let prompt = prompts[index];
+                          prompts[index] = prompt.replace(
+                            new RegExp(answer_id, "g"),
+                            prompt_response
+                          );
+                          if (savememorykey === "True") {
+                            if (
+                              index === counter &&
+                              counter < prompts.length - 1
+                            ) {
+                              prompts[counter + 1] =
+                                prompts[counter] +
+                                "\n" +
+                                prompt_response +
+                                "\n" +
+                                prompts[counter + 1];
+                            }
+                          }
+                        }
+
+                        if (!wpaicg_limited_token) {
+                          let endTime = new Date();
+                          let timeDiff = endTime - startTime;
+                          timeDiff = timeDiff / 1000;
+                          queryString +=
+                            "&prompt_id=" +
+                            wpaicgFormData.id +
+                            "&prompt_name=" +
+                            wpaicgFormData.name +
+                            "&prompt_response=" +
+                            prompt_response +
+                            "&duration=" +
+                            timeDiff +
+                            "&_wpnonce=" +
+                            wpaicgFormData.nonce +
+                            "&source_id=" +
+                            wpaicgFormData.sourceID;
+                          const xhttp = new XMLHttpRequest();
+                          xhttp.open("POST", wpaicgFormData.ajax);
+                          xhttp.setRequestHeader(
+                            "Content-type",
+                            "application/x-www-form-urlencoded"
+                          );
+                          xhttp.send(queryString);
+                          xhttp.onreadystatechange = function (oEvent) {
+                            if (xhttp.readyState === 4) {
+                            }
+                          };
+                        }
+                        wpaicg_PlayGround.eventClose(
+                          eventID,
+                          wpaicgStop,
+                          wpaicgSaveResult,
+                          wpaicgGenerateBtn,
+                          wpaicg_limited_token,
+                          eventReader
+                        );
+                        if (counter < prompts.length - 1) {
+                          counter++;
+                          wpaicg_PlayGround.process(
+                            prompts,
+                            counter,
+                            formSource,
+                            wpaicgPromptTitleFilled,
+                            wpaicgForm,
+                            wpaicg_PlayGround,
+                            wpaicgFormData,
+                            formID,
+                            wpaicgStop,
+                            wpaicgSaveResult,
+                            wpaicgGenerateBtn,
+                            wpaicgMaxLines,
+                            savememorykey
+                          );
+                        } else {
+                          return false;
+                        }
+                      }
+                    } catch (e) {
+                      // console.log("Failed to parse JSON:", e);
+                      wpaicg_PlayGround.eventClose(
+                        eventID,
+                        wpaicgStop,
+                        wpaicgSaveResult,
+                        wpaicgGenerateBtn,
+                        wpaicg_limited_token,
+                        eventReader
+                      );
+                    }
+                  }
+                }
               }
-            } else {
-              content_generated = content_generated.replace(/\n/g, "<br>");
+              read(); // Continue reading
+            } catch (err) {
+              // console.log(err);
             }
-            wpaicg_PlayGround.setContent(
-              wpaicgFormData.response,
-              formID,
-              currentContent + content_generated
-            );
-          }
-        } else if (
-          content_generated === "\n" &&
-          wpaicg_response_events === 0 &&
-          currentContent === ""
-        ) {
-        } else {
-          wpaicg_newline_before = false;
-          wpaicg_response_events += 1;
-          wpaicg_PlayGround.setContent(
-            wpaicgFormData.response,
-            formID,
-            currentContent + content_generated
-          );
+          });
         }
-      }
-      if (count_line === wpaicg_limitLines) {
-        if (!wpaicg_limited_token) {
-          let endTime = new Date();
-          let timeDiff = endTime - startTime;
-          timeDiff = timeDiff / 1000;
-          queryString +=
-            "&prompt_id=" +
-            wpaicgFormData.id +
-            "&prompt_name=" +
-            wpaicgFormData.name +
-            "&prompt_response=" +
-            prompt_response +
-            "&duration=" +
-            timeDiff +
-            "&_wpnonce=" +
-            wpaicgFormData.nonce +
-            "&source_id=" +
-            wpaicgFormData.sourceID;
-          const xhttp = new XMLHttpRequest();
-          xhttp.open("POST", wpaicgFormData.ajax);
-          xhttp.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-          );
-          xhttp.send(queryString);
-          xhttp.onreadystatechange = function (oEvent) {
-            if (xhttp.readyState === 4) {
-            }
-          };
-        }
-        wpaicg_PlayGround.eventClose(
-          eventID,
-          wpaicgStop,
-          wpaicgSaveResult,
-          wpaicgGenerateBtn,
-          wpaicg_limited_token
-        );
-        if (counter < prompts.length - 1) {
-          counter++;
-          wpaicg_PlayGround.process(
-            prompts,
-            counter,
-            formSource,
-            wpaicgPromptTitleFilled,
-            wpaicgForm,
-            wpaicg_PlayGround,
-            wpaicgFormData,
-            formID,
-            wpaicgStop,
-            wpaicgSaveResult,
-            wpaicgGenerateBtn,
-            wpaicgMaxLines
-          );
-        } else {
-          return false;
-        }
-      }
-    };
+
+        read();
+      })
+      .catch((err) => {
+        // console.log(err);
+        alert("Server error: " + err.toString());
+      });
+
+    // window["eventGenerator" + eventID].onmessage = function (e) {
+    //   currentContent = wpaicg_PlayGround.getContent(
+    //     wpaicgFormData.response,
+    //     formID
+    //   );
+
+    //   var resultData = JSON.parse(e.data);
+
+    //   // Check if the response contains the finish_reason property and if it's set to "stop"
+    //   var hasFinishReason =
+    //     resultData.choices &&
+    //     resultData.choices[0] &&
+    //     (resultData.choices[0].finish_reason === "stop" ||
+    //       resultData.choices[0].finish_reason === "length");
+
+    //   if (hasFinishReason) {
+    //     count_line += 1;
+    //     wpaicg_PlayGround.setContent(
+    //       wpaicgFormData.response,
+    //       formID,
+    //       currentContent + wpaicg_break_newline
+    //     );
+    //     wpaicg_response_events = 0;
+    //   } else if (e.data === "[LIMITED]") {
+    //     wpaicg_limited_token = true;
+    //     count_line += 1;
+    //     wpaicg_PlayGround.setContent(
+    //       wpaicgFormData.response,
+    //       formID,
+    //       currentContent + wpaicg_break_newline
+    //     );
+    //     wpaicg_response_events = 0;
+    //   } else {
+    //     var result = JSON.parse(e.data);
+    //     var content_generated = "";
+    //     if (result.error !== undefined) {
+    //       content_generated = result.error.message;
+    //     } else {
+    //       content_generated =
+    //         result.choices[0].delta !== undefined
+    //           ? result.choices[0].delta.content !== undefined
+    //             ? result.choices[0].delta.content
+    //             : ""
+    //           : result.choices[0].text;
+    //     }
+    //     prompt_response += content_generated;
+
+    //     if (
+    //       (content_generated === "\n" ||
+    //         content_generated === " \n" ||
+    //         content_generated === ".\n" ||
+    //         content_generated === "\n\n" ||
+    //         content_generated === '"\n') &&
+    //       wpaicg_response_events > 0 &&
+    //       currentContent !== ""
+    //     ) {
+    //       if (!wpaicg_newline_before) {
+    //         wpaicg_newline_before = true;
+    //         wpaicg_PlayGround.setContent(
+    //           wpaicgFormData.response,
+    //           formID,
+    //           currentContent + wpaicg_break_newline
+    //         );
+    //       }
+    //     } else if (
+    //       content_generated.indexOf("\n") > -1 &&
+    //       wpaicg_response_events > 0 &&
+    //       currentContent !== ""
+    //     ) {
+    //       if (!wpaicg_newline_before) {
+    //         wpaicg_newline_before = true;
+    //         if (wpaicgFormData.response === "textarea") {
+    //           if (!wpaicg_PlayGround.editor(formID)) {
+    //             content_generated = content_generated.replace(/\n/g, "<br>");
+    //           }
+    //         } else {
+    //           content_generated = content_generated.replace(/\n/g, "<br>");
+    //         }
+    //         wpaicg_PlayGround.setContent(
+    //           wpaicgFormData.response,
+    //           formID,
+    //           currentContent + content_generated
+    //         );
+    //       }
+    //     } else if (
+    //       content_generated === "\n" &&
+    //       wpaicg_response_events === 0 &&
+    //       currentContent === ""
+    //     ) {
+    //     } else {
+    //       wpaicg_newline_before = false;
+    //       wpaicg_response_events += 1;
+    //       wpaicg_PlayGround.setContent(
+    //         wpaicgFormData.response,
+    //         formID,
+    //         currentContent + content_generated
+    //       );
+    //     }
+    //   }
+    //   if (count_line === wpaicg_limitLines) {
+    //     var answer_id = "{answer" + (counter + 1) + "}";
+
+    //     for (let index = 0; index < prompts.length; index++) {
+    //       let prompt = prompts[index];
+    //       prompts[index] = prompt.replace(
+    //         new RegExp(answer_id, "g"),
+    //         prompt_response
+    //       );
+    //       if (savememorykey === "True") {
+    //         if (index === counter && counter < prompts.length - 1) {
+    //           prompts[counter + 1] =
+    //             prompts[counter] +
+    //             "\n" +
+    //             prompt_response +
+    //             "\n" +
+    //             prompts[counter + 1];
+    //         }
+    //       }
+    //     }
+
+    //     if (!wpaicg_limited_token) {
+    //       let endTime = new Date();
+    //       let timeDiff = endTime - startTime;
+    //       timeDiff = timeDiff / 1000;
+    //       queryString +=
+    //         "&prompt_id=" +
+    //         wpaicgFormData.id +
+    //         "&prompt_name=" +
+    //         wpaicgFormData.name +
+    //         "&prompt_response=" +
+    //         prompt_response +
+    //         "&duration=" +
+    //         timeDiff +
+    //         "&_wpnonce=" +
+    //         wpaicgFormData.nonce +
+    //         "&source_id=" +
+    //         wpaicgFormData.sourceID;
+    //       const xhttp = new XMLHttpRequest();
+    //       xhttp.open("POST", wpaicgFormData.ajax);
+    //       xhttp.setRequestHeader(
+    //         "Content-type",
+    //         "application/x-www-form-urlencoded"
+    //       );
+    //       xhttp.send(queryString);
+    //       xhttp.onreadystatechange = function (oEvent) {
+    //         if (xhttp.readyState === 4) {
+    //         }
+    //       };
+    //     }
+    //     wpaicg_PlayGround.eventClose(
+    //       eventID,
+    //       wpaicgStop,
+    //       wpaicgSaveResult,
+    //       wpaicgGenerateBtn,
+    //       wpaicg_limited_token
+    //     );
+    //     if (counter < prompts.length - 1) {
+    //       counter++;
+    //       wpaicg_PlayGround.process(
+    //         prompts,
+    //         counter,
+    //         formSource,
+    //         wpaicgPromptTitleFilled,
+    //         wpaicgForm,
+    //         wpaicg_PlayGround,
+    //         wpaicgFormData,
+    //         formID,
+    //         wpaicgStop,
+    //         wpaicgSaveResult,
+    //         wpaicgGenerateBtn,
+    //         wpaicgMaxLines,
+    //         savememorykey
+    //       );
+    //     } else {
+    //       return false;
+    //     }
+    //   }
+    // };
   },
 
   editor: function (form_id) {
@@ -741,14 +1064,25 @@ var wpaicgPlayGround = {
     btn,
     btnResult,
     btn_generator,
-    wpaicg_limited_token
+    wpaicg_limited_token,
+    eventReader
   ) {
-    btn.style.display = "none";
-    if (!wpaicg_limited_token) {
-      btnResult.style.display = "block";
+    try {
+      // console.log("eventClose called");
+      btn.style.display = "none";
+      if (!wpaicg_limited_token) {
+        btnResult.style.display = "block";
+      }
+      this.loading.remove(btn_generator);
+      // window["eventGenerator" + eventID].close();
+      if (eventReader) {
+        // console.log("eventReader", eventReader);
+        eventReader.cancel();
+        // console.log("eventReader closed");
+      }
+    } catch (err) {
+      console.log("Failed to stop eventReader", err);
     }
-    this.loading.remove(btn_generator);
-    window["eventGenerator" + eventID].close();
   },
   validate: {
     email: function (email) {

@@ -704,7 +704,7 @@ $allowed_tags = array_merge($kses_defaults, $svg_args);
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Num. Answers Text', 'gpt3-ai-content-generator') ?></strong>
-                    <input value="<?php echo esc_html__('Number of Answers 1', 'gpt3-ai-content-generator') ?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-template-noanswer_text">
+                    <input value="<?php echo esc_html__('Number of Answers', 'gpt3-ai-content-generator') ?>" type="text" name="noanswer_text" class="regular-text wpaicg-w-100 wpaicg-create-template-noanswer_text">
                 </div>
                 <div class="wpaicg-grid-2">
                     <strong class="wpaicg-d-block mb-5"><?php echo esc_html__('Draft Text', 'gpt3-ai-content-generator') ?></strong>
@@ -866,7 +866,7 @@ endif;
                             data-dclear="<?php echo isset($wpaicg_item['dclear']) ? esc_html($wpaicg_item['dclear']) : ''; ?>" 
                             data-dnotice="<?php echo isset($wpaicg_item['dnotice']) ? esc_html($wpaicg_item['dnotice']) : ''; ?>" 
                             data-generate_text="<?php echo isset($wpaicg_item['generate_text']) && !empty($wpaicg_item['generate_text']) ? esc_html($wpaicg_item['generate_text']) : esc_html__('Generate', 'gpt3-ai-content-generator'); ?>" 
-                            data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers 2', 'gpt3-ai-content-generator'); ?>" 
+                            data-noanswer_text="<?php echo isset($wpaicg_item['noanswer_text']) && !empty($wpaicg_item['noanswer_text']) ? esc_html($wpaicg_item['noanswer_text']) : esc_html__('Number of Answers', 'gpt3-ai-content-generator'); ?>" 
                             data-draft_text="<?php echo isset($wpaicg_item['draft_text']) && !empty($wpaicg_item['draft_text']) ? esc_html($wpaicg_item['draft_text']) : esc_html__('Save Draft', 'gpt3-ai-content-generator'); ?>" 
                             data-clear_text="<?php echo isset($wpaicg_item['clear_text']) && !empty($wpaicg_item['clear_text']) ? esc_html($wpaicg_item['clear_text']) : esc_html__('Clear', 'gpt3-ai-content-generator'); ?>" 
                             data-stop_text="<?php echo isset($wpaicg_item['stop_text']) && !empty($wpaicg_item['stop_text']) ? esc_html($wpaicg_item['stop_text']) : esc_html__('Stop', 'gpt3-ai-content-generator'); ?>" 
@@ -913,7 +913,7 @@ endif;
                 <textarea style="display: none" name="title" class="wpaicg-template-title-filled" rows="8"></textarea>
                 <div class="wpaicg-form-fields"></div>
                 <div class="wpaicg-mb-10">
-                    <strong class="wpaicg-template-text-noanswer_text"><?php echo esc_html__('Number of Answers 3', 'gpt3-ai-content-generator') ?></strong>
+                    <strong class="wpaicg-template-text-noanswer_text"><?php echo esc_html__('Number of Answers', 'gpt3-ai-content-generator') ?></strong>
                     <select class="wpaicg-template-max-lines">
                         <?php
                         for ($i = 1; $i <= 10; $i++) {
@@ -1460,7 +1460,7 @@ endif;
                                 alert(res.msg)
                             }
                         },
-                        error: function() {
+                        error: function(xhr, status, error) {
                             wpaicgRmLoading(btn);
                             alert('<?php echo esc_html__('Something went wrong', 'gpt3-ai-content-generator') ?>');
                         }
@@ -1489,7 +1489,7 @@ endif;
         var wpaicgTemplateDefaultContent = $('.wpaicg-template-modal-content');
         var wpaicgOpenaiSettingsContent = $('.wpaicg-openai-settings-modal-content');
         var wpaicgTemplateEditor = false;
-        var eventGenerator = false;
+        var eventReader = false;
         wpaicgTemplateSearch.on('input', function() {
             wpaicgTemplatesFilter();
         });
@@ -1635,8 +1635,9 @@ endif;
             $('.wpaicg_modal_close').closest('.wpaicg_modal').hide();
             $('.wpaicg_modal_close').closest('.wpaicg_modal').removeClass('wpaicg-small-modal');
             $('.wpaicg-overlay').hide();
-            if (eventGenerator) {
-                eventGenerator.close();
+            if (eventReader) {
+                eventReader.cancel();
+                // eventReader.close();
             }
         });
         var wpaicgEditorNumber;
@@ -1812,7 +1813,6 @@ endif;
             var type = item.attr('data-type');
             var categories = item.attr('data-categories');
             var savememorykey = item.attr('data-savememorykey');
-            console.log("savememorykey: ", savememorykey);
 
             if (id !== "118") {
                 prompt_name = title;
@@ -2029,7 +2029,8 @@ endif;
                 $('.wpaicg-template-form .wpaicg-template-save-result').show();
             }
             wpaicgRmLoading($('.wpaicg-template-form .wpaicg-generate-button'));
-            eventGenerator.close();
+            eventReader.cancel();
+            // eventReader.close();
         }
         $(document).on('click', '.wpaicg-template-form .wpaicg-template-stop-generate', function(e) {
             stopOpenAIGenerator();
@@ -2055,11 +2056,18 @@ endif;
             }
         }
 
+        function process_message(string) {
+            
+        }
+
         function ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag) {
+            // console.log("start AI generator for ", counter);
             let startTime = new Date();
 
             $('.wpaicg-template-title-filled').val(prompts[counter] + ".\n\n");
-            var data = form.serialize();
+            var query = form.serialize();
+            var data = new FormData(form[0]); // Use FormData to handle form serialization
+
             var basicEditor = true;
 
             if (response_type === 'textarea') {
@@ -2086,156 +2094,200 @@ endif;
             var count_line = 0;
             var currentContent = '';
             var current_prompt_response = '';
-            data += '&source_stream=form&nonce=<?php echo wp_create_nonce('wpaicg-ajax-nonce') ?>';
+            query += '&source_stream=form&nonce=<?php echo wp_create_nonce('wpaicg-ajax-nonce') ?>';
+            data.append('source_stream', 'form');
+            data.append('nonce', '<?php echo wp_create_nonce('wpaicg-ajax-nonce'); ?>');
 
-            eventGenerator = new EventSource('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>&' + data);
+
             var wpaicg_response_events = 0;
             var wpaicg_newline_before = false;
             wpaicg_limited_token = false;
 
-            eventGenerator.onmessage = function(e) {
-                if (response_type === 'textarea') {
-                    if (basicEditor) {
-                        currentContent = $('#editor-' + wpaicgEditorNumber).val();
-                    } else {
-                        currentContent = editor.getContent();
-                        currentContent = currentContent.replace(/<\/?p(>|$)/g, "");
-                    }
-                } else {
-                    currentContent = $('.wpaicg-template-response-element').html();
-                }
-                var resultData = JSON.parse(e.data);
+            // console.log("query", query);
+            // console.log("form", form[0]);
+            // console.log('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>');
+            
+            fetch('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>', {
+                method: 'POST',
+                body: data
+            }).then((response) => {
+                // console.log("response", response);
+                eventReader = response.body.getReader();
+                const decoder = new TextDecoder();
 
-                // Check if the response contains the finish_reason property and if it's set to "stop"
-                var hasFinishReason = resultData.choices &&
-                    resultData.choices[0] &&
-                    (resultData.choices[0].finish_reason === "stop" ||
-                        resultData.choices[0].finish_reason === "length");
+                var buffer = "";
 
-                if (hasFinishReason) {
-                    count_line += 1;
-                    if (response_type === 'textarea') {
-                        if (basicEditor) {
-                            $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
-                        } else {
-                            editor.setContent(currentContent + '<br /><br />');
-                        }
-                    } else {
-                        $('.wpaicg-template-response-element').append('<br />');
-                    }
-                    wpaicg_response_events = 0;
-                } else if (e.data === "[LIMITED]") {
-                    wpaicg_limited_token = true;
-                    count_line += 1;
-                    if (response_type === 'textarea') {
-                        if (basicEditor) {
-                            $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
-                        } else {
-                            editor.setContent(currentContent + '<br /><br />');
-                        }
-                    } else {
-                        $('.wpaicg-template-response-element').append('<br />');
-                    }
-                    wpaicg_response_events = 0;
-                } else {
-                    var result = JSON.parse(e.data);
-                    if (result.error !== undefined) {
-                        var content_generated = result.error.message;
-                    } else {
-                        var content_generated = result.choices[0].delta !== undefined ? (result.choices[0].delta.content !== undefined ? result.choices[0].delta.content : '') : result.choices[0].text;
-                    }
-                    
-                    prompt_response += content_generated;
-                    current_prompt_response += content_generated;
-                    if ((content_generated === '\n' || content_generated === ' \n' || content_generated === '.\n' || content_generated === '\n\n' || content_generated === '"\n') && wpaicg_response_events > 0 && currentContent !== '') {
-                        if (!wpaicg_newline_before) {
-                            wpaicg_newline_before = true;
-                            if (response_type === 'textarea') {
-                                if (basicEditor) {
-                                    $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
-                                } else {
-                                    editor.setContent(currentContent + '<br /><br />');
+                function read() {
+                    eventReader.read().then(({ done, value }) => {
+                        try{
+                            buffer += decoder.decode(value, { stream: true });
+                            let boundary = buffer.indexOf('\n');
+                            while (boundary !== -1) {
+                                let chunk = buffer.substring(0, boundary).trim();
+                                buffer = buffer.substring(boundary + 1);
+                                boundary = buffer.indexOf('\n');
+
+                                if (chunk.startsWith('data:')) {
+                                    chunk = chunk.substring(5).trim();
+                                    if (chunk) {
+                                        try {
+                                            const resultData = JSON.parse(chunk);
+                                            
+                                            // Handle the received message here
+                                            if (response_type === 'textarea') {
+                                                if (basicEditor) {
+                                                    currentContent = $('#editor-' + wpaicgEditorNumber).val();
+                                                } else {
+                                                    currentContent = editor.getContent();
+                                                    currentContent = currentContent.replace(/<\/?p(>|$)/g, "");
+                                                }
+                                            } else {
+                                                currentContent = $('.wpaicg-template-response-element').html();
+                                            }
+
+                                            // Check if the response contains the finish_reason property and if it's set to "stop"
+                                            var hasFinishReason = resultData.choices &&
+                                                resultData.choices[0] &&
+                                                (resultData.choices[0].finish_reason === "stop" ||
+                                                    resultData.choices[0].finish_reason === "length");
+
+                                            if (hasFinishReason) {
+                                                // console.log("hasFinishReason", resultData)
+                                                count_line += 1;
+                                                if (response_type === 'textarea') {
+                                                    if (basicEditor) {
+                                                        $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
+                                                    } else {
+                                                        editor.setContent(currentContent + '<br /><br />');
+                                                    }
+                                                } else {
+                                                    $('.wpaicg-template-response-element').append('<br />');
+                                                }
+                                                wpaicg_response_events = 0;
+                                            } else if (chunk === "[LIMITED]") {
+                                                // console.log("LIMITED")
+                                                wpaicg_limited_token = true;
+                                                count_line += 1;
+                                                if (response_type === 'textarea') {
+                                                    if (basicEditor) {
+                                                        $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
+                                                    } else {
+                                                        editor.setContent(currentContent + '<br /><br />');
+                                                    }
+                                                } else {
+                                                    $('.wpaicg-template-response-element').append('<br />');
+                                                }
+                                                wpaicg_response_events = 0;
+                                            } else {
+                                                var result = JSON.parse(chunk);
+                                                if (result.error !== undefined) {
+                                                    var content_generated = result.error.message;
+                                                } else {
+                                                    var content_generated = result.choices[0].delta !== undefined ? (result.choices[0].delta.content !== undefined ? result.choices[0].delta.content : '') : result.choices[0].text;
+                                                }
+                                                
+                                                prompt_response += content_generated;
+                                                current_prompt_response += content_generated;
+                                                if ((content_generated === '\n' || content_generated === ' \n' || content_generated === '.\n' || content_generated === '\n\n' || content_generated === '"\n') && wpaicg_response_events > 0 && currentContent !== '') {
+                                                    if (!wpaicg_newline_before) {
+                                                        wpaicg_newline_before = true;
+                                                        if (response_type === 'textarea') {
+                                                            if (basicEditor) {
+                                                                $('#editor-' + wpaicgEditorNumber).val(currentContent + '<br /><br />');
+                                                            } else {
+                                                                editor.setContent(currentContent + '<br /><br />');
+                                                            }
+                                                        } else {
+                                                            $('.wpaicg-template-response-element').append('<br />');
+                                                        }
+                                                    }
+                                                } else if (content_generated.indexOf("\n") > -1 && wpaicg_response_events > 0 && currentContent !== '') {
+                                                    if (!wpaicg_newline_before) {
+                                                        wpaicg_newline_before = true;
+                                                        content_generated = content_generated.replace(/\n/g, '<br>');
+                                                        if (response_type === 'textarea') {
+                                                            if (basicEditor) {
+                                                                $('#editor-' + wpaicgEditorNumber).val(currentContent + content_generated);
+                                                            } else {
+                                                                editor.setContent(currentContent + content_generated);
+                                                            }
+                                                        } else {
+                                                            $('.wpaicg-template-response-element').append(content_generated);
+                                                        }
+                                                    }
+                                                } else if (content_generated === '\n' && wpaicg_response_events === 0 && currentContent === '') {
+
+                                                } else {
+                                                    wpaicg_newline_before = false;
+                                                    wpaicg_response_events += 1;
+                                                    if (response_type === 'textarea') {
+                                                        if (basicEditor) {
+                                                            $('#editor-' + wpaicgEditorNumber).val(currentContent + content_generated);
+                                                        } else {
+                                                            editor.setContent(currentContent + content_generated);
+                                                        }
+                                                    } else {
+                                                        $('.wpaicg-template-response-element').append(content_generated);
+                                                    }
+                                                }
+                                            }
+                                            if (count_line === wpaicg_limitLines) {
+                                                var answer_id = "{answer" + (counter + 1) + "}";
+                                                $.each(prompts, function(index, prompt) {
+                                                    prompts[index] = prompt.replace(new RegExp(answer_id, 'g'), current_prompt_response);
+                                                    prompts[index] = prompts[index].replace(new RegExp("This is previous chat history.\n\n", 'g'),, "");
+                                                    prompts[index] = prompts[index].replace(new RegExp("\nThis is I am currently want, please answer about this.\n", 'g'),, "");
+                                                    if (memorykeyflag === 'True') {
+                                                        if (index === counter && counter < prompts.length - 1) {
+                                                            prompts[counter + 1] = "This is previous chat history.\n\n" + prompts[counter] + "\n" + current_prompt_response + "\n\nThis is I am currently want, please answer about this.\n" + prompts[counter + 1];
+                                                        }
+                                                    }
+                                                });
+                                                if (!wpaicg_limited_token) {
+                                                    let endTime = new Date();
+                                                    let timeDiff = endTime - startTime;
+                                                    timeDiff = timeDiff / 1000;
+                                                    data += '&action=wpaicg_form_log&prompt_id=' + prompt_id + '&prompt_name=' + prompt_name + '&prompt_response=' + prompt_response + '&duration=' + timeDiff + '&_wpnonce=' + wp_nonce;
+                                                    $.ajax({
+                                                        url: '<?php echo admin_url('admin-ajax.php') ?>',
+                                                        data: data,
+                                                        dataType: 'JSON',
+                                                        type: 'POST',
+                                                        success: function(res) {
+
+                                                        }
+                                                    })
+                                                }
+                                                // console.log("prompts", prompts);
+                                                $('.wpaicg-template-form .wpaicg-template-stop-generate').hide();
+                                                stopOpenAIGenerator();
+                                                wpaicgRmLoading(btn);
+                                                // console.log(counter, prompts.length)
+                                                if (counter < prompts.length - 1) {
+                                                    counter++;
+                                                    ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag)
+                                                    return;
+                                                } else {
+                                                    return;
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.error('Failed to parse JSON:', e);
+                                        }
+                                    }
                                 }
-                            } else {
-                                $('.wpaicg-template-response-element').append('<br />');
                             }
-                        }
-                    } else if (content_generated.indexOf("\n") > -1 && wpaicg_response_events > 0 && currentContent !== '') {
-                        if (!wpaicg_newline_before) {
-                            wpaicg_newline_before = true;
-                            content_generated = content_generated.replace(/\n/g, '<br>');
-                            if (response_type === 'textarea') {
-                                if (basicEditor) {
-                                    $('#editor-' + wpaicgEditorNumber).val(currentContent + content_generated);
-                                } else {
-                                    editor.setContent(currentContent + content_generated);
-                                }
-                            } else {
-                                $('.wpaicg-template-response-element').append(content_generated);
-                            }
-                        }
-                    } else if (content_generated === '\n' && wpaicg_response_events === 0 && currentContent === '') {
-
-                    } else {
-                        wpaicg_newline_before = false;
-                        wpaicg_response_events += 1;
-                        if (response_type === 'textarea') {
-                            if (basicEditor) {
-                                $('#editor-' + wpaicgEditorNumber).val(currentContent + content_generated);
-                            } else {
-                                editor.setContent(currentContent + content_generated);
-                            }
-                        } else {
-                            $('.wpaicg-template-response-element').append(content_generated);
-                        }
-                    }
-                }
-                if (count_line === wpaicg_limitLines) {
-                    console.log("current_prompt_response: ", current_prompt_response);
-                    
-                    var answer_id = "{answer" + (counter + 1) + "}";
-
-                    console.log("answer_id: ", answer_id);
-
-                    $.each(prompts, function(index, prompt) {
-                        prompts[index] = prompt.replace(new RegExp(answer_id, 'g'), current_prompt_response);
-                        if (memorykeyflag === 'True') {
-                            console.log("adding chat history...");
-                            if (index === counter && counter < prompts.length - 1) {
-                                prompts[counter + 1] = prompts[counter] + "\n" + current_prompt_response + "\n" + prompts[counter + 1];
-                            }
+                            read(); // Continue reading
+                        } catch (err) {
+                            console.log(err);
                         }
                     });
-                    
-                    console.log("replaced prompts: ", prompts);
-
-                    if (!wpaicg_limited_token) {
-                        let endTime = new Date();
-                        let timeDiff = endTime - startTime;
-                        timeDiff = timeDiff / 1000;
-                        data += '&action=wpaicg_form_log&prompt_id=' + prompt_id + '&prompt_name=' + prompt_name + '&prompt_response=' + prompt_response + '&duration=' + timeDiff + '&_wpnonce=' + wp_nonce;
-                        $.ajax({
-                            url: '<?php echo admin_url('admin-ajax.php') ?>',
-                            data: data,
-                            dataType: 'JSON',
-                            type: 'POST',
-                            success: function(res) {
-
-                            }
-                        })
-                    }
-                    $('.wpaicg-template-form .wpaicg-template-stop-generate').hide();
-                    stopOpenAIGenerator();
-                    wpaicgRmLoading(btn);
-                    if (counter < prompts.length - 1) {
-                        counter++;
-                        ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag)
-                    } else {
-                        return false
-                    }
-
                 }
-            }
+
+                read();
+            }).catch(error => {
+                console.error('Fetch error:', error);
+            });
         }
 
         // ai generation part
@@ -2246,7 +2298,6 @@ endif;
             var response_type = form.find('.wpaicg-template-response-type').val();
 
             var savememorykey = form.parent().parent().parent().find('.wpaicg-template-savememorykey').text();
-            console.log("savememorykey: ", savememorykey);
 
             if (template_title !== '') {
                 var engine = form.find('.wpaicg-create-template-engine').val();
@@ -2347,12 +2398,9 @@ endif;
 
                                 }
                             }
-
                         } else {
                             prompts.push(template_title);
                         }
-                        console.log('prompts: ', prompts, counter);
-                        
                         ai_generator(prompts, form, btn, prompt_response, response_type, counter, savememorykey);
                     }
                 }
@@ -2675,11 +2723,11 @@ endif;
         //                 var currentContent = '';
         //                 data += '&source_stream=form&nonce=<?php echo wp_create_nonce('wpaicg-ajax-nonce') ?>';
         //                 let prompts = JSON.parse(template_title);
-        //                 eventGenerator = new EventSource('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>&' + data);
+        //                 eventReader = new EventSource('<?php echo esc_html(add_query_arg('wpaicg_stream', 'yes', site_url() . '/index.php')); ?>&' + data);
         //                 var wpaicg_response_events = 0;
         //                 var wpaicg_newline_before = false;
         //                 wpaicg_limited_token = false;
-        //                 eventGenerator.onmessage = function(e) {
+        //                 eventReader.onmessage = function(e) {
         //                     if (response_type === 'textarea') {
         //                         if (basicEditor) {
         //                             currentContent = $('#editor-' + wpaicgEditorNumber).val();
