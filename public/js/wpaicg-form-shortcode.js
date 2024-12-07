@@ -730,12 +730,33 @@ var wpaicgPlayGround = {
                               index === counter &&
                               counter < prompts.length - 1
                             ) {
+                              prompts[counter] = prompts[counter].replace(
+                                new RegExp(
+                                  "This is previous chat history.\n<<<\n",
+                                  "g"
+                                ),
+                                ""
+                              );
+                              prompts[counter] = prompts[counter].replace(
+                                new RegExp(
+                                  "\n>>>\nThe following is what I want, please just refer above chat history and I don't need repeat answer again.\n",
+                                  "g"
+                                ),
+                                ""
+                              );
                               prompts[counter + 1] =
+                                "This is previous chat history.\n<<<\n" +
                                 prompts[counter] +
                                 "\n" +
-                                prompt_response +
-                                "\n" +
+                                current_prompt_response +
+                                "\n>>>\nThe following is what I want, please just refer above chat history and I don't need repeat answer again.\n" +
                                 prompts[counter + 1];
+                              // prompts[counter + 1] =
+                              //   prompts[counter] +
+                              //   "\n" +
+                              //   prompt_response +
+                              //   "\n" +
+                              //   prompts[counter + 1];
                             }
                           }
                         }

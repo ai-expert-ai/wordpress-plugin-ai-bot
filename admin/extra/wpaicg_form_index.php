@@ -2061,7 +2061,7 @@ endif;
         }
 
         function ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag) {
-            // console.log("start AI generator for ", counter);
+            console.log("start AI generator for ", counter);
             let startTime = new Date();
 
             $('.wpaicg-template-title-filled').val(prompts[counter] + ".\n\n");
@@ -2235,11 +2235,11 @@ endif;
                                                 var answer_id = "{answer" + (counter + 1) + "}";
                                                 $.each(prompts, function(index, prompt) {
                                                     prompts[index] = prompt.replace(new RegExp(answer_id, 'g'), current_prompt_response);
-                                                    prompts[index] = prompts[index].replace(new RegExp("This is previous chat history.\n\n", 'g'),, "");
-                                                    prompts[index] = prompts[index].replace(new RegExp("\nThis is I am currently want, please answer about this.\n", 'g'),, "");
                                                     if (memorykeyflag === 'True') {
                                                         if (index === counter && counter < prompts.length - 1) {
-                                                            prompts[counter + 1] = "This is previous chat history.\n\n" + prompts[counter] + "\n" + current_prompt_response + "\n\nThis is I am currently want, please answer about this.\n" + prompts[counter + 1];
+                                                            prompts[counter] = prompts[counter].replace(new RegExp("This is previous chat history.\n<<<\n", 'g'), "");
+                                                            prompts[counter] = prompts[counter].replace(new RegExp("\n>>>\nThe following is what I want, please just refer above chat history and I don't need repeat answer again.\n", 'g'), "");
+                                                            prompts[counter + 1] = "This is previous chat history.\n<<<\n" + prompts[counter] + "\n" + current_prompt_response + "\n>>>\nThe following is what I want, please just refer above chat history and I don't need repeat answer again.\n" + prompts[counter + 1];
                                                         }
                                                     }
                                                 });
@@ -2258,11 +2258,11 @@ endif;
                                                         }
                                                     })
                                                 }
-                                                // console.log("prompts", prompts);
+
                                                 $('.wpaicg-template-form .wpaicg-template-stop-generate').hide();
                                                 stopOpenAIGenerator();
                                                 wpaicgRmLoading(btn);
-                                                // console.log(counter, prompts.length)
+                                                console.log(counter, prompts.length)
                                                 if (counter < prompts.length - 1) {
                                                     counter++;
                                                     ai_generator(prompts, form, btn, prompt_response, response_type, counter, memorykeyflag)
